@@ -72,7 +72,7 @@ export default function ConductorTicketPage() {
 
     const loadData = async () => {
       // Fetch routes
-      const routesResponse = await fetch('http://localhost:3001/api/routes', {
+      const routesResponse = await fetch('https://bus-ticket-system-2phn.onrender.com/api/routes', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -83,7 +83,7 @@ export default function ConductorTicketPage() {
       setRoutes(agencyRoutes)
 
       // Fetch buses
-      const busesResponse = await fetch('http://localhost:3001/api/buses', {
+      const busesResponse = await fetch('https://bus-ticket-system-2phn.onrender.com/api/buses', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -107,7 +107,7 @@ export default function ConductorTicketPage() {
       }
 
       // Fetch occupied seats for this bus and route
-      const ticketsResponse = await fetch(`http://localhost:3001/api/tickets`, {
+      const ticketsResponse = await fetch(`https://bus-ticket-system-2phn.onrender.com/api/tickets`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -188,7 +188,7 @@ export default function ConductorTicketPage() {
     try {
       const tickets = []
       for (const passenger of passengers) {
-        const ticketResponse = await fetch('http://localhost:3001/api/tickets', {
+        const ticketResponse = await fetch('https://bus-ticket-system-2phn.onrender.com/api/tickets', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

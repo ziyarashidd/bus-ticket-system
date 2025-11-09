@@ -41,9 +41,9 @@ export default function ConductorDashboard() {
           getTicketsByConductor(authUser.id),
         ])
 
-        console.log("[v0] Buses loaded:", busesData)
-        console.log("[v0] Routes loaded:", routesData)
-        console.log("[v0] Tickets loaded:", conductorTickets)
+        console.log(" Buses loaded:", busesData)
+        console.log("Routes loaded:", routesData)
+        console.log("Tickets loaded:", conductorTickets)
 
         setBuses(busesData)
         setRoutes(routesData)

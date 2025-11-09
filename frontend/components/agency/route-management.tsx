@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { AlertCircle, Trash2, Plus, ArrowRight, Edit } from "lucide-react"
 import { createRoute, deleteRoute } from "@/lib/db"
 
-const API_BASE_URL = 'http://localhost:3001/api'
+const API_BASE_URL = 'https://bus-ticket-system-2phn.onrender.com/api'
 
 interface RouteManagementProps {
   agencyId: string

@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "name": "bus-ticket-system",
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "framework": "nextjs",
+  "installCommand": "pnpm install",
+  "buildCommand": "pnpm run build",
+  "outputDirectory": "frontend/.next",
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "ignoreCommand": "pnpm run lint",
+  "regions": ["iad1"]
+}

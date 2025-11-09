@@ -1,0 +1,65 @@
+import { type NextRequest, NextResponse } from "next/server"
+
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001"
+
+export async function GET(request: NextRequest) {
+  try {
+    const token = request.cookies.get("auth_token")?.value
+
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    // Forward request to backend
+    const response = await fetch(`${BACKEND_URL}/api/tickets${request.nextUrl.search}`, {
+      method: "GET",
+      headers: {
+        "Cookie": `auth_token=${token}`,
+      },
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status })
+    }
+
+    return NextResponse.json(data)
+  } catch (error) {
+    console.error("Tickets fetch error:", error)
+    return NextResponse.json({ error: "Failed to fetch tickets" }, { status: 500 })
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const token = request.cookies.get("auth_token")?.value
+
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const body = await request.json()
+
+    // Forward request to backend
+    const response = await fetch(`${BACKEND_URL}/api/tickets`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Cookie": `auth_token=${token}`,
+      },
+      body: JSON.stringify(body),
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status })
+    }
+
+    return NextResponse.json(data, { status: response.status })
+  } catch (error) {
+    console.error("Ticket creation error:", error)
+    return NextResponse.json({ error: "Failed to create ticket" }, { status: 500 })
+  }
+}

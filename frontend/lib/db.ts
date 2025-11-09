@@ -1,7 +1,7 @@
 // Database utilities for bus ticketing system
 // Connected to backend API
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://bus-ticket-system-2phn.onrender.com/api"
 
 export interface Agency {
   id: string

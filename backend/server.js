@@ -12,7 +12,7 @@ connectDB()
 
 // Middleware
 app.use(cors({
-  origin: 'https://bus-ticket-systems.vercel.app/', // Next.js frontend
+  origin: 'https://bus-ticket-systems.vercel.app',
   credentials: true
 }))
 app.use(express.json())
@@ -45,4 +45,5 @@ app.use('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Bus Ticketing Backend server is running on port ${PORT}`)
 })
+
 

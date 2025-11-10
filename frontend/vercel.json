@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "env": {
+    "BACKEND_URL": "https://bus-ticket-system-2phn.onrender.com"
+  },
+  "buildCommand": "npm run build",
+  "outputDirectory": "Next.js default",
+  "installCommand": "npm install"
+}

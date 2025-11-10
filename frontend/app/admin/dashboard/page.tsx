@@ -23,13 +23,13 @@ import AgencyPerformance from "@/components/admin/agency-performance"
 export default function AdminDashboard() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState(null)
   const [activeTab, setActiveTab] = useState("overview")
-  const [agencies, setAgencies] = useState<any[]>([])
-  const [conductors, setConductors] = useState<any[]>([])
-  const [tickets, setTickets] = useState<any[]>([])
-  const [buses, setBuses] = useState<any[]>([])
-  const [routes, setRoutes] = useState<any[]>([])
+  const [agencies, setAgencies] = useState([])
+  const [conductors, setConductors] = useState([])
+  const [tickets, setTickets] = useState([])
+  const [buses, setBuses] = useState([])
+  const [routes, setRoutes] = useState([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -40,11 +40,8 @@ export default function AdminDashboard() {
     }
     setUser(authUser)
 
-    // Check URL params for tab
-    const tab = searchParams.get('tab')
-    if (tab) {
-      setActiveTab(tab)
-    }
+    const tab = searchParams.get("tab")
+    if (tab) setActiveTab(tab)
 
     loadData()
   }, [router, searchParams])
@@ -90,9 +87,7 @@ export default function AdminDashboard() {
         <AdminStats agencies={agencies} conductors={conductors} tickets={tickets} buses={buses} routes={routes} />
 
         <AnalyticsCharts agencies={agencies} tickets={tickets} />
-
         <AgencyPerformance agencies={agencies} tickets={tickets} />
-
         <ConductorActivity conductors={conductors} tickets={tickets} />
 
         {/* Management Tabs */}
@@ -129,7 +124,11 @@ export default function AdminDashboard() {
               </TabsContent>
 
               <TabsContent value="agencies" className="space-y-4">
-                <AgencyManagement agencies={agencies.filter(agency => agency.status === 'approved')} onDataChange={loadData} title="Approved Agencies" />
+                <AgencyManagement
+                  agencies={agencies.filter((agency) => agency.status === "approved")}
+                  onDataChange={loadData}
+                  title="Approved Agencies"
+                />
               </TabsContent>
 
               <TabsContent value="conductors" className="space-y-4">

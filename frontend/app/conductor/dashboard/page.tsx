@@ -23,7 +23,7 @@ export default function ConductorDashboard() {
 
   useEffect(() => {
     const authUser = getAuthUser()
-    console.log("[v0] Auth user:", authUser)
+    console.log("[ConductorDashboard] Auth user:", authUser)
 
     if (!authUser || authUser.role !== "conductor") {
       router.push("/login")
@@ -41,15 +41,16 @@ export default function ConductorDashboard() {
           getTicketsByConductor(authUser.id),
         ])
 
-        console.log("[v0] Buses loaded:", busesData)
-        console.log("[v0] Routes loaded:", routesData)
-        console.log("[v0] Tickets loaded:", conductorTickets)
+        console.log("[ConductorDashboard] Buses:", busesData)
+        console.log("[ConductorDashboard] Routes:", routesData)
+        console.log("[ConductorDashboard] Tickets:", conductorTickets)
 
-        setBuses(busesData)
-        setRoutes(routesData)
-        setTickets(conductorTickets)
+        // Normalize _id → id (MongoDB)
+        setBuses(busesData?.map((b: any) => ({ id: b._id || b.id, ...b })) || [])
+        setRoutes(routesData?.map((r: any) => ({ id: r._id || r.id, ...r })) || [])
+        setTickets(conductorTickets || [])
       } catch (error) {
-        console.error("[v0] Error loading conductor data:", error)
+        console.error("[ConductorDashboard] Error loading data:", error)
         setBuses([])
         setRoutes([])
         setTickets([])
@@ -68,29 +69,40 @@ export default function ConductorDashboard() {
 
   const handleStartTicketing = () => {
     if (!selectedBus || !selectedRoute) {
-      alert("Please select both bus and route")
+      alert("Please select both bus and route.")
       return
     }
 
-    // Save selection and navigate to ticket page
     localStorage.setItem(
       "conductor_context",
       JSON.stringify({
         busId: selectedBus,
         routeId: selectedRoute,
         conductorId: user.id,
-      }),
+      })
     )
 
     router.push("/conductor/ticket")
   }
 
-  if (!user) {
-    return <div className="min-h-dvh flex items-center justify-center">Loading...</div>
+  if (isLoading) {
+    return (
+      <div className="min-h-dvh flex items-center justify-center text-gray-600 text-lg">
+        Loading conductor dashboard...
+      </div>
+    )
   }
 
-  const selectedRouteData = routes?.find((r) => r.id === selectedRoute)
-  const selectedBusData = buses?.find((b) => b.id === selectedBus)
+  if (!user) {
+    return (
+      <div className="min-h-dvh flex items-center justify-center text-red-500">
+        Unauthorized. Redirecting to login...
+      </div>
+    )
+  }
+
+  const selectedRouteData = routes.find((r) => r.id === selectedRoute)
+  const selectedBusData = buses.find((b) => b.id === selectedBus)
 
   return (
     <main className="min-h-dvh bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
@@ -109,7 +121,7 @@ export default function ConductorDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
-        {/* Stats */}
+        {/* Stats Section */}
         <ConductorStats tickets={tickets} />
 
         {/* Bus & Route Selection */}
@@ -124,7 +136,9 @@ export default function ConductorDashboard() {
             {buses.length === 0 || routes.length === 0 ? (
               <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700">
                 <p className="font-semibold">⚠️ No buses or routes available</p>
-                <p className="text-sm mt-1">Please contact your agency to add buses and routes to your account.</p>
+                <p className="text-sm mt-1">
+                  Please contact your agency to add buses and routes to your account.
+                </p>
               </div>
             ) : (
               <>
@@ -156,7 +170,9 @@ export default function ConductorDashboard() {
                         <p className="text-green-700">
                           <span className="font-semibold">✓ Selected:</span> {selectedBusData.name}
                         </p>
-                        <p className="text-xs text-green-600">Capacity: {selectedBusData.capacity} seats</p>
+                        <p className="text-xs text-green-600">
+                          Capacity: {selectedBusData.capacity} seats
+                        </p>
                       </div>
                     )}
                   </div>
@@ -213,7 +229,7 @@ export default function ConductorDashboard() {
         </Card>
 
         {/* Recent Tickets */}
-        {tickets.length > 0 && (
+        {tickets?.length > 0 && (
           <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-xl">
             <CardHeader>
               <CardTitle>Recent Tickets</CardTitle>
@@ -221,16 +237,23 @@ export default function ConductorDashboard() {
             <CardContent>
               <div className="space-y-3 max-h-96 overflow-y-auto">
                 {tickets.map((ticket) => (
-                  <div key={ticket.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                  <div
+                    key={ticket.id || ticket._id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border"
+                  >
                     <div>
-                      <p className="font-semibold text-gray-900">{ticket.id}</p>
+                      <p className="font-semibold text-gray-900">
+                        {ticket.id || ticket._id}
+                      </p>
                       <p className="text-sm text-gray-600">
                         {ticket.source} → {ticket.destination}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-gray-900">₹{ticket.fare}</p>
-                      <p className="text-xs text-gray-500">{new Date(ticket.createdAt).toLocaleDateString()}</p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(ticket.createdAt).toLocaleDateString()}
+                      </p>
                     </div>
                   </div>
                 ))}

@@ -1,21 +1,30 @@
-// Database utilities for bus ticketing system
-// Migrated from TypeScript to plain JavaScript
+// Database utilities for bus ticketing system (db.js)
 
 const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://ziyarashid204:ziya%40786@youtubenotes.ta7cg.mongodb.net/bus-ticketing-system?appName=YoutubeNotes'
+const MONGODB_URI =
+  process.env.MONGODB_URI ||
+  'mongodb+srv://ziyarashid204:ziya%40786@youtubenotes.ta7cg.mongodb.net/bus-ticketing-system?appName=YoutubeNotes'
 
 // Connect to MongoDB
 const connectDB = async () => {
   try {
-    await mongoose.connect(MONGODB_URI)
+    await mongoose.connect(MONGODB_URI, {
+      // optional recommended options for older drivers; modern drivers don't require these
+      // useNewUrlParser: true,
+      // useUnifiedTopology: true,
+    })
     console.log('MongoDB connected successfully')
   } catch (error) {
     console.error('MongoDB connection failed:', error)
     throw error
   }
 }
+
+/* ------------------------
+   Schemas & Models
+   ------------------------ */
 
 const AgencySchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
@@ -28,7 +37,6 @@ const AgencySchema = new mongoose.Schema({
   buses: [{ type: String }],
   routes: [{ type: String }],
   createdAt: { type: String, required: true },
-  // New fields for registration form (optional for admin creation)
   legalStatus: { type: String },
   yearOfEstablishment: { type: Number },
   companyRegistrationNumber: { type: String },
@@ -48,7 +56,6 @@ const AgencySchema = new mongoose.Schema({
   currentTicketingMethod: { type: String },
   expectedGoLiveDate: { type: String },
   specificRequirements: { type: String },
-  // Approval status
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   reviewedAt: { type: String },
   reviewedBy: { type: String },
@@ -116,7 +123,10 @@ const RouteModel = mongoose.models.Route || mongoose.model('Route', RouteSchema)
 const ConductorModel = mongoose.models.Conductor || mongoose.model('Conductor', ConductorSchema)
 const TicketModel = mongoose.models.Ticket || mongoose.model('Ticket', TicketSchema)
 
-// Agency operations
+/* ------------------------
+   Agency operations
+   ------------------------ */
+
 const getAgencies = async () => {
   return await AgencyModel.find({ status: 'approved' })
 }
@@ -134,7 +144,7 @@ const createAgency = async (agency) => {
     buses: [],
     routes: [],
     createdAt: new Date().toISOString(),
-    status: agency.status || 'pending',
+    status: agency.status || 'pending'
   })
   return await newAgency.save()
 }
@@ -147,25 +157,20 @@ const deleteAgency = async (id) => {
   const agency = await AgencyModel.findOne({ id })
   if (!agency) return false
 
-  // Delete all buses for this agency
+  // Delete related resources
   await BusModel.deleteMany({ agencyId: id })
-
-  // Delete all routes for this agency
   await RouteModel.deleteMany({ agencyId: id })
-
-  // Delete all conductors for this agency
   await ConductorModel.deleteMany({ agencyId: id })
-
-  // Delete all tickets for this agency
   await TicketModel.deleteMany({ agencyId: id })
 
-  // Delete the agency itself
   await AgencyModel.deleteOne({ id })
-
   return true
 }
 
-// Bus operations
+/* ------------------------
+   Bus operations
+   ------------------------ */
+
 const getBuses = async () => {
   return await BusModel.find()
 }
@@ -178,15 +183,12 @@ const createBus = async (bus) => {
   const newBus = new BusModel({
     ...bus,
     id: `BUS${Date.now()}`,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date().toISOString()
   })
   const savedBus = await newBus.save()
 
-  // Update agency buses array
-  await AgencyModel.findOneAndUpdate(
-    { id: bus.agencyId },
-    { $push: { buses: savedBus.id } }
-  )
+  // Update agency buses array (keep id)
+  await AgencyModel.findOneAndUpdate({ id: bus.agencyId }, { $push: { buses: savedBus.id } })
 
   return savedBus
 }
@@ -202,15 +204,15 @@ const deleteBus = async (id) => {
   await BusModel.deleteOne({ id })
 
   // Update agency buses array
-  await AgencyModel.findOneAndUpdate(
-    { id: bus.agencyId },
-    { $pull: { buses: id } }
-  )
+  await AgencyModel.findOneAndUpdate({ id: bus.agencyId }, { $pull: { buses: id } })
 
   return true
 }
 
-// Route operations
+/* ------------------------
+   Route operations
+   ------------------------ */
+
 const getRoutes = async () => {
   return await RouteModel.find()
 }
@@ -223,15 +225,12 @@ const createRoute = async (route) => {
   const newRoute = new RouteModel({
     ...route,
     id: `RT${Date.now()}`,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date().toISOString()
   })
   const savedRoute = await newRoute.save()
 
   // Update agency routes array
-  await AgencyModel.findOneAndUpdate(
-    { id: route.agencyId },
-    { $push: { routes: savedRoute.id } }
-  )
+  await AgencyModel.findOneAndUpdate({ id: route.agencyId }, { $push: { routes: savedRoute.id } })
 
   return savedRoute
 }
@@ -247,15 +246,15 @@ const deleteRoute = async (id) => {
   await RouteModel.deleteOne({ id })
 
   // Update agency routes array
-  await AgencyModel.findOneAndUpdate(
-    { id: route.agencyId },
-    { $pull: { routes: id } }
-  )
+  await AgencyModel.findOneAndUpdate({ id: route.agencyId }, { $pull: { routes: id } })
 
   return true
 }
 
-// Conductor operations
+/* ------------------------
+   Conductor operations
+   ------------------------ */
+
 const getConductors = async () => {
   return await ConductorModel.find()
 }
@@ -271,16 +270,38 @@ const createConductor = async (conductor) => {
     totalTickets: 0,
     totalEarnings: 0,
     lastActive: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
+    createdAt: new Date().toISOString()
   })
   return await newConductor.save()
 }
 
+// Update conductor: support searching by custom `id` or Mongo `_id`
 const updateConductor = async (id, updates) => {
-  return await ConductorModel.findOneAndUpdate({ id }, updates, { new: true })
+  const query = { $or: [{ id }, { _id: id }] }
+  return await ConductorModel.findOneAndUpdate(query, updates, { new: true })
 }
 
-// Ticket operations
+// Delete conductor: remove by custom id or Mongo _id
+const deleteConductor = async (id) => {
+  // Try delete by id field first
+  let deleted = await ConductorModel.findOneAndDelete({ id })
+  if (deleted) {
+    return deleted
+  }
+
+  // Fallback: try by Mongo _id
+  try {
+    deleted = await ConductorModel.findByIdAndDelete(id)
+    return deleted
+  } catch (err) {
+    return null
+  }
+}
+
+/* ------------------------
+   Ticket operations
+   ------------------------ */
+
 const getTickets = async () => {
   return await TicketModel.find()
 }
@@ -310,6 +331,7 @@ const createTicket = async (ticket) => {
     routeId: ticket.routeId,
     seat: ticket.seat
   })
+
   const conflictingTickets = allTickets.filter(t => {
     const ticketTime = new Date(t.createdAt)
     const endTime = new Date(ticketTime.getTime() + route.estimatedTime * 60 * 60 * 1000 + 24 * 60 * 60 * 1000)
@@ -323,7 +345,7 @@ const createTicket = async (ticket) => {
   const newTicket = new TicketModel({
     ...ticket,
     id: `T${Date.now()}`,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date().toISOString()
   })
   const savedTicket = await newTicket.save()
 
@@ -335,13 +357,17 @@ const createTicket = async (ticket) => {
       {
         totalTickets: conductor.totalTickets + 1,
         totalEarnings: conductor.totalEarnings + Number.parseFloat(ticket.fare),
-        lastActive: new Date().toISOString(),
+        lastActive: new Date().toISOString()
       }
     )
   }
 
   return savedTicket
 }
+
+/* ------------------------
+   Admin / Agency approval
+   ------------------------ */
 
 const getPendingAgencies = async () => {
   return await AgencyModel.find({ status: 'pending' })
@@ -353,7 +379,7 @@ const approveAgency = async (id, adminId) => {
     {
       status: 'approved',
       reviewedAt: new Date().toISOString(),
-      reviewedBy: adminId,
+      reviewedBy: adminId
     },
     { new: true }
   )
@@ -366,11 +392,15 @@ const rejectAgency = async (id, adminId, reason) => {
       status: 'rejected',
       reviewedAt: new Date().toISOString(),
       reviewedBy: adminId,
-      rejectionReason: reason,
+      rejectionReason: reason
     },
     { new: true }
   )
 }
+
+/* ------------------------
+   Export
+   ------------------------ */
 
 module.exports = {
   connectDB,
@@ -396,8 +426,9 @@ module.exports = {
   getConductorsByAgency,
   createConductor,
   updateConductor,
+  deleteConductor, // <- exported
   getTickets,
   getTicketsByAgency,
   getTicketsByConductor,
-  createTicket,
+  createTicket
 }

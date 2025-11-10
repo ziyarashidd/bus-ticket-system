@@ -1,11 +1,12 @@
 {
   "version": 2,
   "name": "bus-ticket-system",
-  "framework": "nextjs",
-  "installCommand": "pnpm install",
-  "buildCommand": "pnpm run build",
-  "outputDirectory": ".next",
+  "builds": [
+    { "src": "next.config.js", "use": "@vercel/next" }
+  ],
+  "installCommand": "pnpm install --frozen-lockfile",
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "BACKEND_URL": "https://bus-ticket-system-2phn.onrender.com"
   }
 }

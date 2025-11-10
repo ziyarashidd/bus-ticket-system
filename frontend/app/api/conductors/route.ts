@@ -4,7 +4,7 @@ const BACKEND_URL =
   process.env.BACKEND_URL || "https://bus-ticket-system-2phn.onrender.com"
 
 /**
- * GET – Fetch all conductors
+ * ✅ GET – Fetch all conductors
  */
 export async function GET(request: NextRequest) {
   try {
@@ -14,7 +14,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Forward GET request to backend
     const response = await fetch(
       `${BACKEND_URL}/api/conductors${request.nextUrl.search}`,
       {
@@ -42,7 +41,7 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST – Create a new conductor
+ * ✅ POST – Create a new conductor
  */
 export async function POST(request: NextRequest) {
   try {
@@ -69,7 +68,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(data, { status: response.status })
     }
 
-    return NextResponse.json(data, { status: response.status })
+    return NextResponse.json(data)
   } catch (error) {
     console.error("Conductor creation error:", error)
     return NextResponse.json(
@@ -80,7 +79,7 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * PUT – Update an existing conductor
+ * ✅ PUT – Update an existing conductor
  */
 export async function PUT(request: NextRequest) {
   try {
@@ -91,7 +90,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { id } = body
+    const { id, ...updateData } = body
 
     if (!id) {
       return NextResponse.json(
@@ -100,14 +99,14 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    // ✅ Include the ID in the backend URL
+    // ✅ Use ID in backend URL
     const response = await fetch(`${BACKEND_URL}/api/conductors/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Cookie: `auth_token=${token}`,
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(updateData),
     })
 
     const data = await response.json()
@@ -121,6 +120,50 @@ export async function PUT(request: NextRequest) {
     console.error("Conductor update error:", error)
     return NextResponse.json(
       { error: "Failed to update conductor" },
+      { status: 500 }
+    )
+  }
+}
+
+/**
+ * ✅ DELETE – Remove a conductor
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    const token = request.cookies.get("auth_token")?.value
+
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const url = new URL(request.url)
+    const id = url.searchParams.get("id")
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Missing conductor ID" },
+        { status: 400 }
+      )
+    }
+
+    const response = await fetch(`${BACKEND_URL}/api/conductors/${id}`, {
+      method: "DELETE",
+      headers: {
+        Cookie: `auth_token=${token}`,
+      },
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      return NextResponse.json(data, { status: response.status })
+    }
+
+    return NextResponse.json(data)
+  } catch (error) {
+    console.error("Conductor deletion error:", error)
+    return NextResponse.json(
+      { error: "Failed to delete conductor" },
       { status: 500 }
     )
   }

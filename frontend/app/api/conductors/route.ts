@@ -5,7 +5,7 @@ const BACKEND_URL =
   process.env.BACKEND_URL || "https://bus-ticket-system-2phn.onrender.com"
 
 /**
- * ✅ GET — Fetch all conductors (or by agencyId)
+ * ✅ GET — Fetch all conductors (optionally by agencyId)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * ✅ PUT — Update an existing conductor
+ * ✅ PUT — Update existing conductor
  */
 export async function PUT(request: NextRequest) {
   try {
@@ -84,7 +84,7 @@ export async function PUT(request: NextRequest) {
         { status: 400 }
       )
 
-    // ✅ Backend expects `/api/conductors/:id`
+    // ✅ Correct backend route
     const response = await fetch(`${BACKEND_URL}/api/conductors/${id}`, {
       method: "PUT",
       headers: {
@@ -106,7 +106,7 @@ export async function PUT(request: NextRequest) {
 }
 
 /**
- * ✅ DELETE — Remove a conductor
+ * ✅ DELETE — Delete a conductor by ID
  */
 export async function DELETE(request: NextRequest) {
   try {
@@ -123,7 +123,6 @@ export async function DELETE(request: NextRequest) {
         { status: 400 }
       )
 
-    // ✅ Correct backend path
     const response = await fetch(`${BACKEND_URL}/api/conductors/${id}`, {
       method: "DELETE",
       headers: {

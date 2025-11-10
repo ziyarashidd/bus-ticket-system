@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge"
 // Removed localStorage imports - now using API calls
 
 // API-based functions for backend integration
-const API_BASE_URL = 'http://localhost:3001/api'
+const API_BASE_URL = 'https://bus-ticket-system-2phn.onrender.com/api'
 
 const createAgencyAPI = async (agencyData: any) => {
   const response = await fetch(`${API_BASE_URL}/agencies`, {

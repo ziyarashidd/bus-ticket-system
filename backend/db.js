@@ -1,11 +1,9 @@
-// Database utilities for bus ticketing system (db.js)
+// db.js - Database utilities for bus ticketing system (final, production-ready)
 
 const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
 
-const MONGODB_URI =
-  process.env.MONGODB_URI ||
-  'mongodb+srv://ziyarashid204:ziya%40786@youtubenotes.ta7cg.mongodb.net/bus-ticketing-system?appName=YoutubeNotes'
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/bus-ticketing-system'
 
 // Connect to MongoDB (idempotent)
 const connectDB = async () => {
@@ -24,7 +22,6 @@ const connectDB = async () => {
 
 /* ------------------------
    Schemas & Models
-   (kept createdAt as string to remain compatible with your app)
    ------------------------ */
 
 const AgencySchema = new mongoose.Schema({
@@ -95,8 +92,8 @@ const ConductorSchema = new mongoose.Schema({
   phone: { type: String, required: true },
   username: { type: String, required: true },
   password: { type: String, required: true },
-  totalTickets: { type: Number, required: true },
-  totalEarnings: { type: Number, required: true },
+  totalTickets: { type: Number, required: true, default: 0 },
+  totalEarnings: { type: Number, required: true, default: 0 },
   lastActive: { type: String, required: true },
   createdAt: { type: String, required: true }
 })
@@ -280,8 +277,18 @@ const createConductor = async (conductor) => {
 
 // Update conductor: support searching by custom `id` or Mongo `_id`
 const updateConductor = async (id, updates) => {
-  const query = { $or: [{ id }, { _id: id }] }
-  return await ConductorModel.findOneAndUpdate(query, updates, { new: true })
+  try {
+    // Try custom id first, then _id
+    let updated = await ConductorModel.findOneAndUpdate({ id }, updates, { new: true })
+    if (updated) return updated
+
+    // fallback
+    updated = await ConductorModel.findByIdAndUpdate(id, updates, { new: true })
+    return updated
+  } catch (err) {
+    console.error('Error in updateConductor:', err)
+    throw err
+  }
 }
 
 // Delete conductor: remove by custom id or Mongo _id

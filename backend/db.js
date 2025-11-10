@@ -7,14 +7,14 @@ const MONGODB_URI =
   process.env.MONGODB_URI ||
   'mongodb+srv://ziyarashid204:ziya%40786@youtubenotes.ta7cg.mongodb.net/bus-ticketing-system?appName=YoutubeNotes'
 
-// Connect to MongoDB
+// Connect to MongoDB (idempotent)
 const connectDB = async () => {
   try {
-    await mongoose.connect(MONGODB_URI, {
-      // optional recommended options for older drivers; modern drivers don't require these
-      // useNewUrlParser: true,
-      // useUnifiedTopology: true,
-    })
+    if (mongoose.connection.readyState === 1) {
+      console.log('MongoDB already connected')
+      return
+    }
+    await mongoose.connect(MONGODB_URI)
     console.log('MongoDB connected successfully')
   } catch (error) {
     console.error('MongoDB connection failed:', error)
@@ -24,6 +24,7 @@ const connectDB = async () => {
 
 /* ------------------------
    Schemas & Models
+   (kept createdAt as string to remain compatible with your app)
    ------------------------ */
 
 const AgencySchema = new mongoose.Schema({
@@ -157,11 +158,13 @@ const deleteAgency = async (id) => {
   const agency = await AgencyModel.findOne({ id })
   if (!agency) return false
 
-  // Delete related resources
-  await BusModel.deleteMany({ agencyId: id })
-  await RouteModel.deleteMany({ agencyId: id })
-  await ConductorModel.deleteMany({ agencyId: id })
-  await TicketModel.deleteMany({ agencyId: id })
+  // Delete related resources in parallel
+  await Promise.all([
+    BusModel.deleteMany({ agencyId: id }),
+    RouteModel.deleteMany({ agencyId: id }),
+    ConductorModel.deleteMany({ agencyId: id }),
+    TicketModel.deleteMany({ agencyId: id })
+  ])
 
   await AgencyModel.deleteOne({ id })
   return true
@@ -283,17 +286,16 @@ const updateConductor = async (id, updates) => {
 
 // Delete conductor: remove by custom id or Mongo _id
 const deleteConductor = async (id) => {
-  // Try delete by id field first
-  let deleted = await ConductorModel.findOneAndDelete({ id })
-  if (deleted) {
-    return deleted
-  }
-
-  // Fallback: try by Mongo _id
   try {
+    // Try delete by `id` field first
+    let deleted = await ConductorModel.findOneAndDelete({ id })
+    if (deleted) return deleted
+
+    // Fallback: try by Mongo _id (string or ObjectId)
     deleted = await ConductorModel.findByIdAndDelete(id)
     return deleted
   } catch (err) {
+    console.error('Error in deleteConductor:', err)
     return null
   }
 }
@@ -355,8 +357,8 @@ const createTicket = async (ticket) => {
     await ConductorModel.findOneAndUpdate(
       { id: ticket.conductorId },
       {
-        totalTickets: conductor.totalTickets + 1,
-        totalEarnings: conductor.totalEarnings + Number.parseFloat(ticket.fare),
+        totalTickets: (conductor.totalTickets || 0) + 1,
+        totalEarnings: (conductor.totalEarnings || 0) + Number.parseFloat(ticket.fare || 0),
         lastActive: new Date().toISOString()
       }
     )

@@ -2,7 +2,6 @@
   "version": 2,
   "name": "bus-ticket-system",
   "framework": "nextjs",
-  "rootDirectory": "frontend",
   "installCommand": "pnpm install",
   "buildCommand": "pnpm run build",
   "outputDirectory": ".next",

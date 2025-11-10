@@ -7,7 +7,13 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { LogOut, Bus, MapPin, Users, TicketIcon, TrendingUp } from "lucide-react"
 import { getAuthUser, clearAuth } from "@/lib/auth"
-import { getBusesByAgency, getRoutesByAgency, getConductorsByAgency, getTicketsByAgency } from "@/lib/db"
+import {
+  getBusesByAgency,
+  getRoutesByAgency,
+  getConductorsByAgency,
+  getTicketsByAgency,
+} from "@/lib/db"
+
 import BusManagement from "@/components/agency/bus-management"
 import RouteManagement from "@/components/agency/route-management"
 import ConductorManagement from "@/components/agency/conductor-management"
@@ -26,6 +32,7 @@ export default function AgencyDashboard() {
   const [activeTab, setActiveTab] = useState("overview")
   const [isLoading, setIsLoading] = useState(true)
 
+  // ✅ Load user and agency data
   useEffect(() => {
     const authUser = getAuthUser()
     if (!authUser || authUser.role !== "agency") {
@@ -62,18 +69,12 @@ export default function AgencyDashboard() {
     router.push("/login")
   }
 
-  const handleBusAdded = () => {
-    if (user?.agencyId) {
-      loadData(user.agencyId)
-    }
-  }
+  // ✅ Refresh handlers
+  const handleBusAdded = () => user?.agencyId && loadData(user.agencyId)
+  const handleRouteAdded = () => user?.agencyId && loadData(user.agencyId)
+  const handleConductorAdded = () => user?.agencyId && loadData(user.agencyId)
 
-  const handleRouteAdded = () => {
-    if (user?.agencyId) {
-      loadData(user.agencyId)
-    }
-  }
-
+  // ✅ Calculate Stats
   const conductorStats = conductors.map((conductor) => ({
     ...conductor,
     ticketCount: tickets.filter((t) => t.conductorId === conductor.id).length,
@@ -91,7 +92,7 @@ export default function AgencyDashboard() {
 
   return (
     <main className="min-h-dvh bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
-      {/* Header */}
+      {/* ================= HEADER ================= */}
       <div className="bg-white/80 backdrop-blur-xl border-b border-white/20 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
           <div>
@@ -105,13 +106,16 @@ export default function AgencyDashboard() {
         </div>
       </div>
 
+      {/* ================= MAIN CONTENT ================= */}
       <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
-        {/* Stats Overview */}
+        {/* Quick Stats Section */}
         <AgencyStats buses={buses} routes={routes} />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Today's Earnings */}
           <TodayEarnings tickets={tickets} />
 
+          {/* Total Conductors */}
           <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-xl">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
@@ -124,6 +128,7 @@ export default function AgencyDashboard() {
             </CardContent>
           </Card>
 
+          {/* Total Tickets */}
           <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-xl">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
@@ -136,6 +141,7 @@ export default function AgencyDashboard() {
             </CardContent>
           </Card>
 
+          {/* Total Revenue */}
           <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-xl">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
@@ -144,21 +150,26 @@ export default function AgencyDashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-green-600">₹{totalRevenue.toFixed(2)}</div>
+              <div className="text-3xl font-bold text-green-600">
+                ₹{totalRevenue.toFixed(2)}
+              </div>
             </CardContent>
           </Card>
         </div>
 
+        {/* Charts & Performance */}
         <RevenueCharts conductors={conductors} tickets={tickets} />
+        <ConductorPerformanceDetailed
+          conductors={conductors}
+          tickets={tickets}
+          routes={routes}
+        />
 
-        <ConductorPerformanceDetailed conductors={conductors} tickets={tickets} routes={routes} />
-
-        {/* Management Tabs */}
+        {/* ================= MANAGEMENT TABS ================= */}
         <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <span className="text-2xl">⚙️</span>
-              Management
+              <span className="text-2xl">⚙️</span> Management
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -179,18 +190,26 @@ export default function AgencyDashboard() {
               </TabsList>
 
               <TabsContent value="buses" className="space-y-4">
-                <BusManagement agencyId={user.agencyId} buses={buses} onBusAdded={handleBusAdded} />
+                <BusManagement
+                  agencyId={user.agencyId}
+                  buses={buses}
+                  onBusAdded={handleBusAdded}
+                />
               </TabsContent>
 
               <TabsContent value="routes" className="space-y-4">
-                <RouteManagement agencyId={user.agencyId} routes={routes} onRouteAdded={handleRouteAdded} />
+                <RouteManagement
+                  agencyId={user.agencyId}
+                  routes={routes}
+                  onRouteAdded={handleRouteAdded}
+                />
               </TabsContent>
 
               <TabsContent value="conductors" className="space-y-4">
                 <ConductorManagement
                   agencyId={user.agencyId}
                   agencyCode={user.agencyCode}
-                  onConductorAdded={handleBusAdded}
+                  onConductorAdded={handleConductorAdded}
                 />
               </TabsContent>
             </Tabs>
